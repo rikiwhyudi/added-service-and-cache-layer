@@ -3,6 +3,8 @@ package main
 import (
 	"backend-api/database"
 	"backend-api/pkg/mysql"
+	"backend-api/pkg/redis"
+
 	"backend-api/routes"
 	"fmt"
 	"net/http"
@@ -22,6 +24,9 @@ func main() {
 
 	//initial DB connection
 	mysql.DatabaseInit()
+
+	//initial Redis connection
+	redis.RedisClientInit()
 
 	r := mux.NewRouter()
 

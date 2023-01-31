@@ -3,7 +3,7 @@ package handlers
 import (
 	authdto "backend-api/dto/auth"
 	dto "backend-api/dto/result"
-	"backend-api/service"
+	service "backend-api/services"
 	"encoding/json"
 	"net/http"
 )
