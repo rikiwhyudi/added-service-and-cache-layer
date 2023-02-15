@@ -16,7 +16,7 @@ type LoginResponse struct {
 }
 
 type CheckAutResponse struct {
-	Id     int    `json:"id"`
+	Id     int    `json:"-"`
 	Email  string `json:"email"`
 	Name   string `json:"name"`
 	Status string `json:"status"`

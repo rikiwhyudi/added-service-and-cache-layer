@@ -21,7 +21,7 @@ type authCache struct {
 	rdb            *redis.Client
 }
 
-func NewCache(authRepository repositories.AuthRepository, rdb *redis.Client) *authCache {
+func NewAuthCache(authRepository repositories.AuthRepository, rdb *redis.Client) *authCache {
 	return &authCache{authRepository, rdb}
 }
 
@@ -55,8 +55,8 @@ func (c *authCache) Login(email string) (models.User, error) {
 	if err != nil {
 		return user, err
 	}
-	c.rdb.Set(c.rdb.Context(), cacheKey, cacheData, time.Hour)
 
+	c.rdb.Set(c.rdb.Context(), cacheKey, cacheData, time.Hour)
 	return user, nil
 }
 
@@ -81,7 +81,7 @@ func (c *authCache) GetUserID(ID int) (models.User, error) {
 	if err != nil {
 		return user, err
 	}
-	c.rdb.Set(c.rdb.Context(), cacheKey, cacheData, time.Hour)
 
+	c.rdb.Set(c.rdb.Context(), cacheKey, cacheData, time.Hour)
 	return user, nil
 }

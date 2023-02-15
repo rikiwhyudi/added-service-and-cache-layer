@@ -6,6 +6,8 @@ import (
 	service "backend-api/services"
 	"encoding/json"
 	"net/http"
+
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type handlerAuth struct {
@@ -63,5 +65,24 @@ func (h *handlerAuth) Login(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Status: http.StatusOK, Action: "login", Data: loginResponse}
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *handlerAuth) GetUserID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charshet=utf-8")
+
+	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	userId := int(userInfo["id"].(float64))
+
+	getResponse, err := h.AuthService.GetUserID(userId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	response := dto.SuccessResult{Status: http.StatusOK, Action: "check-auth", Data: getResponse}
 	json.NewEncoder(w).Encode(response)
 }

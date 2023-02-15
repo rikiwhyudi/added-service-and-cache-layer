@@ -37,6 +37,7 @@ func main() {
 	routes.RouteInit(r.PathPrefix("/api/v1").Subrouter())
 
 	//setup static prefix path
+	r.PathPrefix("/uploads").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
 	//create cors
 

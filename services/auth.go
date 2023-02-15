@@ -1,7 +1,7 @@
 package service
 
 import (
-	"backend-api/cache"
+	authcache "backend-api/cache"
 	authdto "backend-api/dto/auth"
 	"backend-api/models"
 	"backend-api/pkg/bcrypt"
@@ -22,12 +22,12 @@ type AuthService interface {
 
 type authService struct {
 	// AuthRepository repositories.AuthRepository
-	AuthCache cache.AuthCache
+	authCache authcache.AuthCache
 	validator *validator.Validate
 }
 
-func NewAuthService(AuthCache cache.AuthCache) *authService {
-	return &authService{AuthCache, validator.New()}
+func NewAuthService(authCache authcache.AuthCache) *authService {
+	return &authService{authCache, validator.New()}
 }
 
 func (s *authService) Register(request authdto.RegisterRequest) (*authdto.RegisterResponse, error) {
@@ -49,16 +49,15 @@ func (s *authService) Register(request authdto.RegisterRequest) (*authdto.Regist
 		Status:   "customer",
 	}
 
-	data, err := s.AuthCache.Register(user)
+	data, err := s.authCache.Register(user)
 	if err != nil {
 		return nil, err
 	}
 
 	response := authdto.RegisterResponse{
-		Name:     data.Name,
-		Email:    data.Email,
-		Password: data.Password,
-		Status:   data.Status,
+		Name:   data.Name,
+		Email:  data.Email,
+		Status: data.Status,
 	}
 
 	return &response, nil
@@ -71,8 +70,7 @@ func (s *authService) Login(request authdto.LoginRequest) (*authdto.LoginRespons
 		return nil, err
 	}
 
-	user, err := s.AuthCache.Login(request.Email)
-	fmt.Println(user)
+	user, err := s.authCache.Login(request.Email)
 
 	if err != nil {
 		return nil, err
@@ -109,12 +107,16 @@ func (s *authService) Login(request authdto.LoginRequest) (*authdto.LoginRespons
 }
 
 func (s *authService) GetUserID(ID int) (*authdto.CheckAutResponse, error) {
-	user, err := s.AuthCache.GetUserID(ID)
+
+	//getUserById
+	user, err := s.authCache.GetUserID(ID)
 	if err != nil {
 		return nil, err
 	}
 
 	response := authdto.CheckAutResponse{
+		Email:  user.Email,
+		Name:   user.Name,
 		Status: user.Status,
 	}
 
