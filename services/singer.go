@@ -2,6 +2,7 @@ package service
 
 import (
 	singerCache "backend-api/cache"
+	musicdto "backend-api/dto/music"
 	singerdto "backend-api/dto/singer"
 	"backend-api/models"
 	"context"
@@ -9,71 +10,103 @@ import (
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
-	"github.com/go-playground/validator/v10"
 )
 
 type SingerService interface {
-	FindAllSingers() ([]models.Singer, error)
-	GetSinger(ID int) (*singerdto.SingerResponse, error)
+	FindAllSingers() (*[]singerdto.AllSingerResponse, error)
+	GetSingerID(ID int) (*singerdto.AllSingerResponse, error)
 	CreateSinger(request singerdto.SingerRequest) (*singerdto.SingerResponse, error)
-	// UpdateSinger(singer singerdto.SingerRequest) (*singerdto.SingerResponse, error)
-	// DeleteSinger(singer singerdto.SingerRequest) (*singerdto.SingerResponse, error)
+	UpdateSinger(request singerdto.UpdateSingerRequest, ID int) (*singerdto.SingerResponse, error)
+	DeleteSinger(ID int) (*singerdto.SingerResponse, error)
 }
 
 type singerService struct {
 	singerCache singerCache.SingerCache
-	validator   *validator.Validate
 }
 
 func NewSingerService(singerCache singerCache.SingerCache) *singerService {
-	return &singerService{singerCache, validator.New()}
+	return &singerService{singerCache}
 }
 
-func (s *singerService) FindAllSingers() ([]models.Singer, error) {
+func (s *singerService) FindAllSingers() (*[]singerdto.AllSingerResponse, error) {
 
-	singers, err := s.singerCache.FindAllSingers()
+	singer, err := s.singerCache.FindAllSingers()
 	if err != nil {
 		return nil, err
 	}
 
-	return singers, err
+	// Construc, loop and return response
+	response := make([]singerdto.AllSingerResponse, 0)
+	for _, data := range singer {
+		musicResponse := make([]musicdto.AllMusicResponse, 0)
+		for _, music := range data.Music {
+			dataMusic := musicdto.AllMusicResponse{
+				ID:    music.ID,
+				Title: music.Title,
+				Year:  music.Year.Format("02-01-2006"),
+			}
+
+			musicResponse = append(musicResponse, dataMusic)
+		}
+
+		singerResponse := singerdto.AllSingerResponse{
+			ID:          data.ID,
+			Name:        data.Name,
+			Thumbnail:   data.Thumbnail,
+			Old:         data.Old,
+			Category:    data.Category,
+			StartCareer: data.StartCareer.Format("02-01-2006"),
+			Musics:      musicResponse,
+		}
+
+		response = append(response, singerResponse)
+	}
+
+	return &response, nil
+
 }
 
-func (s *singerService) GetSinger(ID int) (*singerdto.SingerResponse, error) {
+func (s *singerService) GetSingerID(ID int) (*singerdto.AllSingerResponse, error) {
 
-	singer, err := s.singerCache.GetSinger(ID)
+	singer, err := s.singerCache.GetSingerID(ID)
 	if err != nil {
 		return nil, err
 	}
 
-	response := singerdto.SingerResponse{
+	// Construct and return response
+	musicResponse := make([]musicdto.AllMusicResponse, 0)
+	for _, music := range singer.Music {
+		dataMusic := musicdto.AllMusicResponse{
+			ID:    music.ID,
+			Title: music.Title,
+			Year:  music.Year.Format("02-01-2006"),
+		}
+		musicResponse = append(musicResponse, dataMusic)
+	}
+
+	response := singerdto.AllSingerResponse{
 		ID:          singer.ID,
 		Name:        singer.Name,
 		Thumbnail:   singer.Thumbnail,
 		Old:         singer.Old,
 		Category:    singer.Category,
-		StartCareer: singer.StartCareer,
+		StartCareer: singer.StartCareer.Format("02-01-2006"),
+		Musics:      musicResponse,
 	}
 
 	return &response, nil
 }
 
 func (s *singerService) CreateSinger(request singerdto.SingerRequest) (*singerdto.SingerResponse, error) {
-	// Validate request input using go-playground/validator
-	err := s.validator.Struct(request)
-	if err != nil {
-		return nil, err
-	}
-
 	// Upload singer thumbnail to cloudinary
 	ctx := context.Background()
 	var CLOUD_NAME = os.Getenv("CLOUD_NAME")
 	var API_KEY = os.Getenv("API_KEY")
 	var API_SECRET = os.Getenv("API_SECRET")
 
-	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+	cloud, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
 
-	resp, err := cld.Upload.Upload(ctx, request.Thumbnail, uploader.UploadParams{Folder: "waysbuck"})
+	resp, err := cloud.Upload.Upload(ctx, request.Thumbnail, uploader.UploadParams{Folder: "waysbuck"})
 	if err != nil {
 		return nil, err
 	}
@@ -95,11 +128,91 @@ func (s *singerService) CreateSinger(request singerdto.SingerRequest) (*singerdt
 
 	// Construct and return response
 	response := singerdto.SingerResponse{
+		ID:          data.ID,
 		Name:        data.Name,
 		Thumbnail:   data.Thumbnail,
 		Old:         data.Old,
 		Category:    data.Category,
-		StartCareer: data.StartCareer,
+		StartCareer: data.StartCareer.Format("02-01-2006"),
+	}
+
+	return &response, nil
+}
+
+func (s *singerService) UpdateSinger(request singerdto.UpdateSingerRequest, ID int) (*singerdto.SingerResponse, error) {
+
+	// Upload singer thumbnail to cloudinary
+	var ctx = context.Background()
+	var CLOUD_NAME = os.Getenv("CLOUD_NAME")
+	var API_KEY = os.Getenv("API_KEY")
+	var API_SECRET = os.Getenv("API_SECRET")
+
+	cloud, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+	thumbnail, _ := cloud.Upload.Upload(ctx, request.Thumbnail, uploader.UploadParams{Folder: "waysbuck"})
+
+	singer, err := s.singerCache.GetSingerID(ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if request.Name != "" {
+		singer.Name = request.Name
+	}
+
+	if request.Thumbnail != "false" {
+		singer.Thumbnail = thumbnail.SecureURL
+	}
+
+	if request.Old != 0 {
+		singer.Old = request.Old
+	}
+
+	if request.Category != "" {
+		singer.Category = request.Category
+	}
+
+	if !request.StartCareer.IsZero() {
+		singer.StartCareer = request.StartCareer
+	}
+
+	data, err := s.singerCache.UpdateSinger(singer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Construct and return response
+	response := singerdto.SingerResponse{
+		ID:          data.ID,
+		Name:        data.Name,
+		Thumbnail:   data.Thumbnail,
+		Old:         data.Old,
+		Category:    data.Category,
+		StartCareer: data.StartCareer.Format("02-01-2006"),
+	}
+
+	return &response, nil
+}
+
+func (s *singerService) DeleteSinger(ID int) (*singerdto.SingerResponse, error) {
+
+	singer, err := s.singerCache.GetSingerID(ID)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := s.singerCache.DeleteSinger(singer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Construct and return response
+	response := singerdto.SingerResponse{
+		ID:          data.ID,
+		Name:        data.Name,
+		Thumbnail:   data.Thumbnail,
+		Old:         data.Old,
+		Category:    data.Category,
+		StartCareer: data.StartCareer.Format("02-01-2006"),
 	}
 
 	return &response, nil

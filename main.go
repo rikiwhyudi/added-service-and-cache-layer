@@ -28,12 +28,13 @@ func main() {
 	//initial Redis connection
 	redis.RedisClientInit()
 
+	//initial Mux Router connection
 	r := mux.NewRouter()
 
 	//run migration
 	database.RunMigration()
 
-	//grouping routes
+	//initial grouping routes
 	routes.RouteInit(r.PathPrefix("/api/v1").Subrouter())
 
 	//setup static prefix path

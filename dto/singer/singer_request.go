@@ -11,9 +11,9 @@ type SingerRequest struct {
 }
 
 type UpdateSingerRequest struct {
-	Name        string    `json:"name"`
-	Thumbnail   string    `json:"thumbnail"`
-	Old         int       `json:"old"`
-	Category    string    `json:"catergory"`
-	StartCareer time.Time `json:"start_career"`
+	Name        string    `json:"name" form:"name"`
+	Thumbnail   string    `json:"thumbnail" form:"thumbnail"`
+	Old         int       `json:"old" form:"old"`
+	Category    string    `json:"catergory" form:"category"`
+	StartCareer time.Time `json:"start_career" form:"start_career"`
 }

@@ -14,11 +14,11 @@ import (
 
 func AuthRoutes(r *mux.Router) {
 
-	userRepository := repositories.RepositoryAuth(mysql.DB)
-	userCache := authcache.NewAuthCache(userRepository, redis.RDB)
-	userService := service.NewAuthService(userCache)
+	authRepository := repositories.RepositoryAuth(mysql.DB)
+	authCache := authcache.NewAuthCache(authRepository, redis.RDB)
+	authService := service.NewAuthService(authCache)
 
-	h := handlers.HandlerAuth(userService)
+	h := handlers.HandlerAuth(authService)
 
 	r.HandleFunc("/register", h.Register).Methods("POST")
 	r.HandleFunc("/login", h.Login).Methods("POST")

@@ -20,5 +20,9 @@ func SingerRoutes(r *mux.Router) {
 
 	h := handlers.HandlerSingers(singerService)
 
+	r.HandleFunc("/singers", middleware.Auth(h.FindAllSingers)).Methods("GET")
+	r.HandleFunc("/singer/{id}", middleware.Auth(h.GetSingerID)).Methods("GET")
 	r.HandleFunc("/singer", middleware.Auth(middleware.UploadFile(h.CreateSinger))).Methods("POST")
+	r.HandleFunc("/singer/{id}", middleware.Auth(middleware.UploadFile(h.UpdateSinger))).Methods("PATCH")
+	r.HandleFunc("/singer/{id}", middleware.Auth(h.DeleteSinger)).Methods("DELETE")
 }

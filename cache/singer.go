@@ -12,7 +12,7 @@ import (
 
 type SingerCache interface {
 	FindAllSingers() ([]models.Singer, error)
-	GetSinger(ID int) (models.Singer, error)
+	GetSingerID(ID int) (models.Singer, error)
 	CreateSinger(singer models.Singer) (models.Singer, error)
 	UpdateSinger(singer models.Singer) (models.Singer, error)
 	DeleteSinger(singer models.Singer) (models.Singer, error)
@@ -52,9 +52,9 @@ func (c *singerCache) FindAllSingers() ([]models.Singer, error) {
 	return data, nil
 }
 
-func (c *singerCache) GetSinger(ID int) (models.Singer, error) {
+func (c *singerCache) GetSingerID(ID int) (models.Singer, error) {
 	var singer models.Singer
-	cacheKey := fmt.Sprintf("singer%v", ID)
+	cacheKey := fmt.Sprintf("singer:%v", ID)
 
 	if cacheData, err := c.rdb.Get(c.rdb.Context(), cacheKey).Result(); err == nil {
 		if err := json.Unmarshal([]byte(cacheData), &singer); err != nil {
@@ -63,18 +63,18 @@ func (c *singerCache) GetSinger(ID int) (models.Singer, error) {
 		return singer, nil
 	}
 
-	user, err := c.singerRepository.GetSinger(ID)
+	data, err := c.singerRepository.GetSingerID(ID)
 	if err != nil {
-		return user, err
+		return data, err
 	}
 
-	cacheData, err := json.Marshal(user)
+	cacheData, err := json.Marshal(data)
 	if err != nil {
-		return user, err
+		return data, err
 	}
 
 	c.rdb.Set(c.rdb.Context(), cacheKey, cacheData, time.Hour)
-	return user, nil
+	return data, nil
 }
 
 func (c *singerCache) CreateSinger(singer models.Singer) (models.Singer, error) {

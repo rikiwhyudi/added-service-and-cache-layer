@@ -4,20 +4,20 @@ type RegisterResponse struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"-"`
-	Status   string `json:"status"`
+	Role     string `json:"role"`
 }
 
 type LoginResponse struct {
-	Id     int    `json:"id"`
-	Name   string `json:"name"`
-	Email  string `json:"email"`
-	Token  string `json:"token"`
-	Status string `json:"status"`
+	Id    int    `json:"-"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Token string `json:"token"`
+	Role  string `json:"role"`
 }
 
 type CheckAutResponse struct {
-	Id     int    `json:"-"`
-	Email  string `json:"email"`
-	Name   string `json:"name"`
-	Status string `json:"status"`
+	Id    int    `json:"-"`
+	Email string `json:"email"`
+	Name  string `json:"name"`
+	Role  string `json:"role"`
 }
